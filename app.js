@@ -161,10 +161,10 @@ function renderTable(data, market, tableId) {
             <td>${isKR ? (s.price || 0).toLocaleString() : n(s.price, 1)}</td>
             <td class="${(s.yield || 0) >= 3 ? "positive" : ""}">${n(s.yield, 1)}</td>
             <td>${n(s.payoutRatio, 0)}</td>
-            <td class="positive">${n(s.divGrowth5Y, 1)}</td>
+            <td style="white-space:nowrap">${hist.length >= 2 ? sparkline(hist, "#a29bfe") : "-"}</td>
             <td class="${(s.streak || 0) >= 25 ? "positive" : ""}">${s.streak || 0}</td>
             <td class="${(s.fcfMargin || 0) >= 20 ? "positive" : ""}">${n(s.fcfMargin, 1)}</td>
-            <td>${n(s.fcfPayoutRatio, 0)}</td>
+            <td class="${(s.fcfGrowth || 0) > 10 ? "positive" : (s.fcfGrowth || 0) < 0 ? "negative" : ""}">${s.fcfGrowth != null ? n(s.fcfGrowth, 1) : "-"}</td>
             <td class="${(s.revenueGrowth || 0) >= 10 ? "positive" : ""}">${n(s.revenueGrowth, 1)}</td>
             <td>${n(s.per, 1)}</td>
             ${renderPriceReturn(s)}
@@ -186,7 +186,7 @@ function updateStats(usData, krData) {
     const avg = (arr, key) => (arr.reduce((s, v) => s + v[key], 0) / arr.length).toFixed(1);
     document.getElementById("stat-count").textContent = data.length;
     document.getElementById("stat-avg-yield").textContent = avg(data, "yield") + "%";
-    document.getElementById("stat-avg-growth").textContent = avg(data, "divGrowth5Y") + "%";
+    document.getElementById("stat-avg-growth").textContent = avg(data, "streak") + "년";
     document.getElementById("stat-avg-fcf").textContent = avg(data, "fcfMargin") + "%";
 }
 

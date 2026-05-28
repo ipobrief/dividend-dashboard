@@ -89,7 +89,9 @@ function sortData(data, market) {
     });
 }
 
-function sparkline(history) {
+function sparkline(history, color) {
+    if (!history || history.length < 2) return "";
+    const col = color || "#6c5ce7";
     const min = Math.min(...history);
     const max = Math.max(...history);
     const range = max - min || 1;
@@ -100,9 +102,42 @@ function sparkline(history) {
         return `${x},${y}`;
     });
     return `<svg class="sparkline" viewBox="0 0 ${w} ${h}">
-        <polyline points="${points.join(" ")}" fill="none" stroke="#6c5ce7" stroke-width="1.5"/>
-        <circle cx="${points[points.length-1].split(",")[0]}" cy="${points[points.length-1].split(",")[1]}" r="2" fill="#6c5ce7"/>
+        <polyline points="${points.join(" ")}" fill="none" stroke="${col}" stroke-width="1.5"/>
+        <circle cx="${points[points.length-1].split(",")[0]}" cy="${points[points.length-1].split(",")[1]}" r="2" fill="${col}"/>
     </svg>`;
+}
+
+function getPriceReturnPeriod() {
+    const streak = +document.getElementById("filter-streak").value;
+    if (streak >= 10) return { years: 10, key: "pr10Y" };
+    if (streak >= 5) return { years: 5, key: "pr5Y" };
+    if (streak >= 3) return { years: 3, key: "pr3Y" };
+    return { years: 5, key: "pr5Y" }; // 기본 5년
+}
+
+function renderPriceReturn(s) {
+    const period = getPriceReturnPeriod();
+    const ret = s[period.key];
+    const ph = s.priceHistory || [];
+
+    // 기간에 맞게 price history 슬라이스
+    const years = period.years;
+    const sliced = ph.length > years ? ph.slice(ph.length - years - 1) : ph;
+
+    let retText = "-";
+    let retClass = "";
+    if (ret != null && !isNaN(ret)) {
+        retText = (ret >= 0 ? "+" : "") + ret.toFixed(1) + "%";
+        retClass = ret >= 0 ? "positive" : "negative";
+    }
+
+    const color = (ret != null && ret >= 0) ? "#00b894" : "#ff6b6b";
+    const chart = sliced.length >= 2 ? sparkline(sliced, color) : "";
+
+    return `<td class="${retClass}" style="white-space:nowrap">
+        <span style="font-size:12px;font-weight:600">${retText}</span>
+        <span style="display:inline-block;vertical-align:middle;margin-left:4px">${chart}</span>
+    </td>`;
 }
 
 function renderTable(data, market, tableId) {
@@ -132,7 +167,7 @@ function renderTable(data, market, tableId) {
             <td>${n(s.fcfPayoutRatio, 0)}</td>
             <td class="${(s.revenueGrowth || 0) >= 10 ? "positive" : ""}">${n(s.revenueGrowth, 1)}</td>
             <td>${n(s.per, 1)}</td>
-            <td>${hist.length >= 2 ? sparkline(hist) : "-"}</td>
+            ${renderPriceReturn(s)}
         </tr>`;
     }).join("");
 
@@ -310,7 +345,7 @@ function renderETFTable(data, tableId) {
             <td class="${(r1y || 0) >= 15 ? "positive" : ""}">${r1y != null ? n(r1y, 1) : "-"}</td>
             <td>${r3y != null && r3y > 0 ? n(r3y, 1) : "-"}</td>
             <td><span class="freq-badge ${freqClass}">${freq}</span></td>
-            <td>${hist.length >= 2 ? sparkline(hist) : "-"}</td>
+            ${renderPriceReturn(s)}
         </tr>
     `}).join("");
 }

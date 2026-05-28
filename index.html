@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>배당성장주 대시보드</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>💰 배당성장주 대시보드</h1>
+        <p class="subtitle">FCF 탄탄 · 높은 배당성향 · 매출 성장 · 배당 성장</p>
+    </header>
+
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="us">🇺🇸 미국 배당성장주</button>
+        <button class="tab-btn" data-tab="kr">🇰🇷 국내 배당성장주</button>
+        <button class="tab-btn" data-tab="etf">📦 배당성장 ETF</button>
+        <button class="tab-btn" data-tab="compare">📊 비교 분석</button>
+        <button class="tab-btn" data-tab="simulator">🧮 배당 시뮬레이터</button>
+    </nav>
+
+    <section class="filters">
+        <div class="filter-group">
+            <label>시가배당률</label>
+            <select id="filter-yield">
+                <option value="0" selected>전체</option>
+                <option value="1">1% 이상</option>
+                <option value="2">2% 이상</option>
+                <option value="3">3% 이상</option>
+                <option value="5">5% 이상</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>배당성향</label>
+            <select id="filter-payout">
+                <option value="-999" selected>전체</option>
+                <option value="20">20% 이상</option>
+                <option value="30">30% 이상</option>
+                <option value="50">50% 이상</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>FCF 마진</label>
+            <select id="filter-fcf">
+                <option value="-999" selected>전체</option>
+                <option value="5">5% 이상</option>
+                <option value="10">10% 이상</option>
+                <option value="15">15% 이상</option>
+                <option value="20">20% 이상</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>매출 성장률(YoY)</label>
+            <select id="filter-revenue">
+                <option value="-999" selected>전체</option>
+                <option value="0">0% 이상</option>
+                <option value="5">5% 이상</option>
+                <option value="10">10% 이상</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>연속 배당성장</label>
+            <select id="filter-streak">
+                <option value="0" selected>전체</option>
+                <option value="3">3년 이상</option>
+                <option value="5">5년 이상</option>
+                <option value="10">10년 이상</option>
+                <option value="25">25년 이상 (Aristocrat)</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>섹터</label>
+            <select id="filter-sector">
+                <option value="">전체</option>
+                <option value="IT">IT/테크</option>
+                <option value="헬스케어">헬스케어</option>
+                <option value="산업재">산업재</option>
+                <option value="필수소비재">필수소비재</option>
+                <option value="에너지">에너지</option>
+                <option value="금융">금융</option>
+                <option value="유틸리티">유틸리티</option>
+                <option value="소재">소재</option>
+                <option value="통신">통신</option>
+                <option value="부동산">부동산</option>
+            </select>
+        </div>
+        <button id="btn-reset" class="btn-reset">필터 초기화</button>
+    </section>
+
+    <section class="summary-cards">
+        <div class="card">
+            <span class="card-label">표시 종목 수</span>
+            <span class="card-value" id="stat-count">0</span>
+        </div>
+        <div class="card">
+            <span class="card-label">평균 시가배당률</span>
+            <span class="card-value" id="stat-avg-yield">0%</span>
+        </div>
+        <div class="card">
+            <span class="card-label">평균 배당성장률(5Y)</span>
+            <span class="card-value" id="stat-avg-growth">0%</span>
+        </div>
+        <div class="card">
+            <span class="card-label">평균 FCF 마진</span>
+            <span class="card-value" id="stat-avg-fcf">0%</span>
+        </div>
+    </section>
+
+    <div class="tab-content active" id="tab-us">
+        <div class="table-wrap">
+            <table id="table-us">
+                <thead>
+                    <tr>
+                        <th data-sort="ticker">티커</th>
+                        <th data-sort="name">종목명</th>
+                        <th data-sort="sector">섹터</th>
+                        <th data-sort="price">주가($)</th>
+                        <th data-sort="yield" class="sorted desc">시가배당률(%)</th>
+                        <th data-sort="payoutRatio">배당성향(%)</th>
+                        <th data-sort="divGrowth5Y">배당성장률 5Y(%)</th>
+                        <th data-sort="streak">연속 배당성장(년)</th>
+                        <th data-sort="fcfMargin">FCF 마진(%)</th>
+                        <th data-sort="fcfPayoutRatio">FCF 배당성향(%)</th>
+                        <th data-sort="revenueGrowth">매출성장 YoY(%)</th>
+                        <th data-sort="per">PER</th>
+                        <th>배당 추이</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-kr">
+        <div class="table-wrap">
+            <table id="table-kr">
+                <thead>
+                    <tr>
+                        <th data-sort="ticker">종목코드</th>
+                        <th data-sort="name">종목명</th>
+                        <th data-sort="sector">섹터</th>
+                        <th data-sort="price">주가(원)</th>
+                        <th data-sort="yield" class="sorted desc">시가배당률(%)</th>
+                        <th data-sort="payoutRatio">배당성향(%)</th>
+                        <th data-sort="divGrowth5Y">배당성장률 5Y(%)</th>
+                        <th data-sort="streak">연속 배당성장(년)</th>
+                        <th data-sort="fcfMargin">FCF 마진(%)</th>
+                        <th data-sort="fcfPayoutRatio">FCF 배당성향(%)</th>
+                        <th data-sort="revenueGrowth">매출성장 YoY(%)</th>
+                        <th data-sort="per">PER</th>
+                        <th>배당 추이</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-etf">
+        <div class="etf-grid">
+            <div class="etf-section">
+                <h3>🇺🇸 미국 배당성장 ETF</h3>
+                <div class="table-wrap">
+                    <table id="table-etf-us">
+                        <thead>
+                            <tr>
+                                <th data-sort="ticker">티커</th>
+                                <th data-sort="name">ETF명</th>
+                                <th data-sort="category">유형</th>
+                                <th data-sort="price">주가($)</th>
+                                <th data-sort="yield">분배율(%)</th>
+                                <th data-sort="divGrowth5Y">분배성장률 5Y(%)</th>
+                                <th data-sort="expenseRatio">보수(%)</th>
+                                <th data-sort="aum">운용규모</th>
+                                <th data-sort="holdings">보유종목수</th>
+                                <th data-sort="return1Y">1Y 수익률(%)</th>
+                                <th data-sort="return3Y">3Y 수익률(%)</th>
+                                <th>분배 주기</th>
+                                <th>분배 추이</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="etf-section">
+                <h3>🇰🇷 국내 배당성장 ETF</h3>
+                <div class="table-wrap">
+                    <table id="table-etf-kr">
+                        <thead>
+                            <tr>
+                                <th data-sort="ticker">종목코드</th>
+                                <th data-sort="name">ETF명</th>
+                                <th data-sort="category">유형</th>
+                                <th data-sort="price">주가(원)</th>
+                                <th data-sort="yield">분배율(%)</th>
+                                <th data-sort="divGrowth5Y">분배성장률 5Y(%)</th>
+                                <th data-sort="expenseRatio">보수(%)</th>
+                                <th data-sort="aum">운용규모</th>
+                                <th data-sort="holdings">보유종목수</th>
+                                <th data-sort="return1Y">1Y 수익률(%)</th>
+                                <th data-sort="return3Y">3Y 수익률(%)</th>
+                                <th>분배 주기</th>
+                                <th>분배 추이</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="etf-info-box">
+            <h4>💡 배당성장 ETF 선택 가이드</h4>
+            <div class="etf-guide-grid">
+                <div class="guide-item">
+                    <span class="guide-tag">배당성장 추구</span>
+                    <p>VIG, DGRO, SCHD - 배당을 꾸준히 늘려온 기업 중심</p>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-tag">고배당 수익</span>
+                    <p>HDV, SPYD, JEPI - 현재 높은 배당률 중심</p>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-tag">월배당</span>
+                    <p>JEPI, JEPQ, O(리츠) - 매월 분배금 지급</p>
+                </div>
+                <div class="guide-item">
+                    <span class="guide-tag">국내 월배당</span>
+                    <p>TIGER/KODEX 미국배당다우존스 - 월분배형</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-simulator">
+        <div class="simulator-container">
+            <div class="sim-input-section">
+                <h3>투자금 입력</h3>
+                <div class="sim-input-row">
+                    <div class="sim-field">
+                        <label>투자금액</label>
+                        <div class="input-with-unit">
+                            <input type="text" id="sim-amount" value="10,000,000" placeholder="투자금액">
+                            <span class="unit">원</span>
+                        </div>
+                    </div>
+                    <div class="sim-field">
+                        <label>투자 시장</label>
+                        <select id="sim-market">
+                            <option value="both">미국 + 국내 개별주</option>
+                            <option value="us">미국 개별주</option>
+                            <option value="kr">국내 개별주</option>
+                            <option value="etf-us">미국 배당 ETF</option>
+                            <option value="etf-kr">국내 배당 ETF</option>
+                            <option value="etf-both">미국 + 국내 ETF</option>
+                        </select>
+                    </div>
+                    <div class="sim-field">
+                        <label>배분 방식</label>
+                        <select id="sim-alloc">
+                            <option value="equal">균등 배분</option>
+                            <option value="yield">배당률 가중</option>
+                            <option value="top5">상위 5종목</option>
+                            <option value="top3">상위 3종목</option>
+                        </select>
+                    </div>
+                    <div class="sim-field">
+                        <label>세금 적용</label>
+                        <select id="sim-tax">
+                            <option value="yes">세후 (15.4%)</option>
+                            <option value="no">세전</option>
+                        </select>
+                    </div>
+                    <button id="btn-simulate" class="btn-simulate">시뮬레이션</button>
+                </div>
+            </div>
+
+            <div class="sim-results" id="sim-results" style="display:none;">
+                <div class="sim-summary-cards">
+                    <div class="card sim-card">
+                        <span class="card-label">총 투자금</span>
+                        <span class="card-value" id="sim-total-invest">0원</span>
+                    </div>
+                    <div class="card sim-card accent-green">
+                        <span class="card-label">연간 예상 배당금</span>
+                        <span class="card-value" id="sim-annual-div">0원</span>
+                    </div>
+                    <div class="card sim-card accent-blue">
+                        <span class="card-label">월 평균 배당금</span>
+                        <span class="card-value" id="sim-monthly-div">0원</span>
+                    </div>
+                    <div class="card sim-card accent-yellow">
+                        <span class="card-label">포트폴리오 배당률</span>
+                        <span class="card-value" id="sim-port-yield">0%</span>
+                    </div>
+                </div>
+
+                <div class="sim-detail-grid">
+                    <div class="sim-section">
+                        <h3>종목별 배당 내역</h3>
+                        <div class="table-wrap">
+                            <table id="table-sim">
+                                <thead>
+                                    <tr>
+                                        <th>종목</th>
+                                        <th>투자금</th>
+                                        <th>보유 주수</th>
+                                        <th>주당 배당금</th>
+                                        <th>연간 배당금(세전)</th>
+                                        <th>연간 배당금(세후)</th>
+                                        <th>배당 지급월</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="sim-section">
+                        <h3>월별 배당 캘린더</h3>
+                        <div class="calendar-grid" id="sim-calendar"></div>
+                    </div>
+
+                    <div class="sim-section">
+                        <h3>10년 배당 성장 시뮬레이션</h3>
+                        <p class="sim-note">배당성장률(5Y 평균)이 유지된다고 가정</p>
+                        <div class="chart-placeholder" style="height:280px;">
+                            <canvas id="canvas-growth"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-compare">
+        <div class="compare-container">
+            <div class="compare-section">
+                <h3>시장별 평균 비교</h3>
+                <div class="chart-placeholder" id="chart-compare">
+                    <canvas id="canvas-compare"></canvas>
+                </div>
+            </div>
+            <div class="compare-section">
+                <h3>섹터별 배당률 분포</h3>
+                <div class="chart-placeholder" id="chart-sector">
+                    <canvas id="canvas-sector"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>데이터는 참고용이며 투자 판단의 근거로 사용하지 마세요. 실시간 데이터가 아닌 샘플 데이터입니다.</p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

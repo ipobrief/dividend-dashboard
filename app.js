@@ -108,11 +108,7 @@ function sparkline(history, color) {
 }
 
 function getPriceReturnPeriod() {
-    const streak = +document.getElementById("filter-streak").value;
-    if (streak >= 10) return { years: 10, key: "pr10Y" };
-    if (streak >= 5) return { years: 5, key: "pr5Y" };
-    if (streak >= 3) return { years: 3, key: "pr3Y" };
-    return { years: 5, key: "pr5Y" }; // 기본 5년
+    return { years: 5, key: "pr5Y" }; // 고정 5년
 }
 
 function renderPriceReturn(s) {
@@ -140,16 +136,77 @@ function renderPriceReturn(s) {
     </td>`;
 }
 
+function renderDivHistory(s, isKR) {
+    const hist = (s.divHistory || []).filter(v => v > 0);
+    if (hist.length < 1) return `<td>-</td>`;
+    const chart = hist.length >= 2 ? sparkline(hist, "#a29bfe") : "";
+    const currency = isKR ? "원" : "$";
+    const divData = JSON.stringify(hist).replace(/"/g, '&quot;');
+    const ticker = s.ticker;
+    const name = (s.name || "").replace(/'/g, "\\'");
+    return `<td style="white-space:nowrap;cursor:pointer" onclick="showDivPopup('${ticker}','${name}',${divData},'${currency}')">${chart}<span style="font-size:10px;color:#8b8fa3;margin-left:2px">${hist.length}년</span></td>`;
+}
+
+function showDivPopup(ticker, name, history, currency) {
+    let existing = document.getElementById("div-popup");
+    if (existing) existing.remove();
+
+    const currentYear = new Date().getFullYear();
+    const startYear = currentYear - history.length;
+
+    let rows = history.map((v, i) => {
+        const year = startYear + i + 1;
+        const prev = i > 0 ? history[i - 1] : null;
+        let change = "";
+        if (prev && prev > 0) {
+            const pct = ((v / prev - 1) * 100).toFixed(1);
+            const arrow = pct >= 0 ? "▲" : "▼";
+            const color = pct >= 0 ? "#00b894" : "#ff6b6b";
+            change = `<span style="color:${color};font-size:11px">${arrow}${Math.abs(pct)}%</span>`;
+        }
+        const formatted = currency === "원" ? Math.round(v).toLocaleString() + "원" : "$" + v.toFixed(2);
+        return `<tr><td>${year}</td><td>${formatted}</td><td>${change}</td></tr>`;
+    }).join("");
+
+    const popup = document.createElement("div");
+    popup.id = "div-popup";
+    popup.innerHTML = `
+        <div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="this.parentElement.remove()">
+            <div style="background:#1e2235;border-radius:12px;padding:24px;min-width:320px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.4)" onclick="event.stopPropagation()">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="margin:0;color:#e4e6f0;font-size:16px">${ticker} 배당 내역</h3>
+                    <span style="cursor:pointer;color:#8b8fa3;font-size:20px" onclick="document.getElementById('div-popup').remove()">✕</span>
+                </div>
+                <p style="color:#8b8fa3;font-size:12px;margin:0 0 12px">${name}</p>
+                <div style="height:80px;margin-bottom:16px">${sparkline(history, "#a29bfe")}</div>
+                <table style="width:100%;border-collapse:collapse">
+                    <thead><tr style="color:#8b8fa3;font-size:11px;border-bottom:1px solid #2e3347">
+                        <th style="text-align:left;padding:6px 8px">연도</th>
+                        <th style="text-align:right;padding:6px 8px">배당금</th>
+                        <th style="text-align:right;padding:6px 8px">변동</th>
+                    </tr></thead>
+                    <tbody style="color:#e4e6f0;font-size:13px">${rows}</tbody>
+                </table>
+            </div>
+        </div>`;
+    document.body.appendChild(popup);
+}
+
+function renderFcfGrowth(s) {
+    const v = s.fcfGrowth;
+    if (v == null || isNaN(v) || v >= 999 || v <= -999) return `<td>-</td>`;
+    const cls = v > 10 ? "positive" : v < 0 ? "negative" : "";
+    return `<td class="${cls}">${v.toFixed(1)}</td>`;
+}
+
 function renderTable(data, market, tableId) {
     const filtered = filterData(data);
     const sorted = sortData(filtered, market);
     const tbody = document.querySelector(`#${tableId} tbody`);
     const isKR = market === "kr";
-    const currency = isKR ? "원" : "$";
 
     const n = (v, d) => (v != null && !isNaN(v)) ? Number(v).toFixed(d) : "-";
     tbody.innerHTML = sorted.map(s => {
-        const hist = (s.divHistory || []).filter(v => v > 0);
         const link = isKR
             ? `https://finance.naver.com/item/main.naver?code=${s.ticker}`
             : `https://finance.yahoo.com/quote/${s.ticker}`;
@@ -161,10 +218,10 @@ function renderTable(data, market, tableId) {
             <td>${isKR ? (s.price || 0).toLocaleString() : n(s.price, 1)}</td>
             <td class="${(s.yield || 0) >= 3 ? "positive" : ""}">${n(s.yield, 1)}</td>
             <td>${n(s.payoutRatio, 0)}</td>
-            <td style="white-space:nowrap">${hist.length >= 2 ? sparkline(hist, "#a29bfe") : "-"}</td>
+            ${renderDivHistory(s, isKR)}
             <td class="${(s.streak || 0) >= 25 ? "positive" : ""}">${s.streak || 0}</td>
             <td class="${(s.fcfMargin || 0) >= 20 ? "positive" : ""}">${n(s.fcfMargin, 1)}</td>
-            <td class="${(s.fcfGrowth || 0) > 10 ? "positive" : (s.fcfGrowth || 0) < 0 ? "negative" : ""}">${s.fcfGrowth != null ? n(s.fcfGrowth, 1) : "-"}</td>
+            ${renderFcfGrowth(s)}
             <td class="${(s.revenueGrowth || 0) >= 10 ? "positive" : ""}">${n(s.revenueGrowth, 1)}</td>
             <td>${n(s.per, 1)}</td>
             ${renderPriceReturn(s)}
@@ -338,7 +395,7 @@ function renderETFTable(data, tableId) {
             <td>${s.category || s.sector || "-"}</td>
             <td>${isKR ? (s.price || 0).toLocaleString() : n(s.price, 1)}</td>
             <td class="${(s.yield || 0) >= 3 ? "positive" : ""}">${n(s.yield, 1)}</td>
-            <td class="${(s.divGrowth5Y || 0) > 0 ? "positive" : ""}">${(s.divGrowth5Y || 0) > 0 ? n(s.divGrowth5Y, 1) : "-"}</td>
+            ${renderDivHistory(s, isKR)}
             <td>${n(s.expenseRatio, 2)}</td>
             <td>${s.aum || "-"}</td>
             <td>${s.holdings ? s.holdings.toLocaleString() : "-"}</td>

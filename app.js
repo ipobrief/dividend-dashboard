@@ -141,11 +141,18 @@ function renderDivHistory(s, isKR) {
     if (hist.length < 1) return `<td>-</td>`;
     const chart = hist.length >= 2 ? sparkline(hist, "#a29bfe") : "";
     const currency = isKR ? "원" : "$";
-    const divData = JSON.stringify(hist).replace(/"/g, '&quot;');
-    const ticker = s.ticker;
-    const name = (s.name || "").replace(/'/g, "\\'");
-    return `<td style="white-space:nowrap;cursor:pointer" onclick="showDivPopup('${ticker}','${name}',${divData},'${currency}')">${chart}<span style="font-size:10px;color:#8b8fa3;margin-left:2px">${hist.length}년</span></td>`;
+    const divData = btoa(encodeURIComponent(JSON.stringify({t:s.ticker,n:s.name||"",h:hist,c:currency})));
+    return `<td style="white-space:nowrap;cursor:pointer" class="div-hist-cell" data-div="${divData}">${chart}<span style="font-size:10px;color:#8b8fa3;margin-left:2px">${hist.length}년</span></td>`;
 }
+
+document.addEventListener("click", function(e) {
+    const cell = e.target.closest(".div-hist-cell");
+    if (!cell) return;
+    try {
+        const d = JSON.parse(decodeURIComponent(atob(cell.dataset.div)));
+        showDivPopup(d.t, d.n, d.h, d.c);
+    } catch(err) { console.error(err); }
+});
 
 function showDivPopup(ticker, name, history, currency) {
     let existing = document.getElementById("div-popup");

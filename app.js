@@ -201,7 +201,9 @@ function showDivPopup(ticker, name, history, currency) {
 
 function renderFcfGrowth(s) {
     const v = s.fcfGrowth;
-    if (v == null || isNaN(v) || v >= 999 || v <= -999) return `<td>-</td>`;
+    const fcf = s.fcfMargin;
+    // FCF마진이 0이면 FCF성장도 의미없음, 극단값 필터
+    if (v == null || isNaN(v) || v >= 500 || v <= -500 || fcf === 0 || fcf == null) return `<td>-</td>`;
     const cls = v > 10 ? "positive" : v < 0 ? "negative" : "";
     return `<td class="${cls}">${v.toFixed(1)}</td>`;
 }

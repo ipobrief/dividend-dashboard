@@ -199,15 +199,6 @@ function showDivPopup(ticker, name, history, currency) {
     document.body.appendChild(popup);
 }
 
-function renderFcfGrowth(s) {
-    const v = s.fcfGrowth;
-    const fcf = s.fcfMargin;
-    // FCF마진이 0이면 FCF성장도 의미없음, 극단값 필터
-    if (v == null || isNaN(v) || v >= 500 || v <= -500 || fcf === 0 || fcf == null) return `<td>-</td>`;
-    const cls = v > 10 ? "positive" : v < 0 ? "negative" : "";
-    return `<td class="${cls}">${v.toFixed(1)}</td>`;
-}
-
 function renderTable(data, market, tableId) {
     const filtered = filterData(data);
     const sorted = sortData(filtered, market);
@@ -230,7 +221,6 @@ function renderTable(data, market, tableId) {
             ${renderDivHistory(s, isKR)}
             <td class="${(s.streak || 0) >= 25 ? "positive" : ""}">${s.streak || 0}</td>
             <td class="${(s.fcfMargin || 0) >= 20 ? "positive" : ""}">${n(s.fcfMargin, 1)}</td>
-            ${renderFcfGrowth(s)}
             <td class="${(s.revenueGrowth || 0) >= 10 ? "positive" : ""}">${n(s.revenueGrowth, 1)}</td>
             <td>${n(s.per, 1)}</td>
             ${renderPriceReturn(s)}

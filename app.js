@@ -436,10 +436,9 @@ function runSimulation() {
     const ccFilter = document.getElementById("sim-cc").value;
     const isCC = s => {
         const n = ((s.name || "") + " " + (s.category || "")).toLowerCase();
-        return n.includes("covered") || n.includes("cover") || n.includes("cvd") || n.includes("cove")
-            || n.includes("커버드콜") || n.includes("premium") || n.includes("프리미엄")
-            || n.includes("target covere") || n.includes("fixed cvd")
-            || ["JEPI","JEPQ","QYLD","XYLD","DIVO","SVOL","NUSI"].includes(s.ticker);
+        return n.includes("covered") || n.includes("cover call") || n.includes("cvd") || n.includes("covere")
+            || n.includes("커버드콜") || n.includes("프리미엄")
+            || ["QYLD","XYLD"].includes(s.ticker);
     };
     if (ccFilter === "exclude") pool = pool.filter(s => !isCC(s));
     else if (ccFilter === "only") pool = pool.filter(s => isCC(s));

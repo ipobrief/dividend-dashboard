@@ -432,6 +432,16 @@ function runSimulation() {
     if (market === "etf-us" || market === "etf-both") pool.push(...US_ETFS);
     if (market === "etf-kr" || market === "etf-both") pool.push(...KR_ETFS);
 
+    // 커버드콜 필터
+    const ccFilter = document.getElementById("sim-cc").value;
+    const isCC = s => {
+        const n = ((s.name || "") + " " + (s.category || "")).toLowerCase();
+        return n.includes("covered") || n.includes("커버드콜") || n.includes("premium") || n.includes("프리미엄")
+            || ["JEPI","JEPQ","QYLD","XYLD","DIVO","SVOL","NUSI"].includes(s.ticker);
+    };
+    if (ccFilter === "exclude") pool = pool.filter(s => !isCC(s));
+    else if (ccFilter === "only") pool = pool.filter(s => isCC(s));
+
     if (pool.length === 0) {
         document.getElementById("sim-results").style.display = "none";
         return;
@@ -495,9 +505,15 @@ function runSimulation() {
     document.getElementById("sim-port-yield").textContent = portYield.toFixed(2) + "%";
 
     const tbody = document.querySelector("#table-sim tbody");
-    tbody.innerHTML = rows.map(r => `
+    tbody.innerHTML = rows.map(r => {
+        const simLink = r.stock.currency === "USD"
+            ? `https://finance.yahoo.com/quote/${r.stock.ticker}`
+            : `https://finance.naver.com/item/main.naver?code=${r.stock.ticker}`;
+        const simLabel = r.stock.currency === "USD" ? r.stock.ticker : r.stock.name;
+        const simFlag = r.stock.currency === "USD" ? "🇺🇸" : "🇰🇷";
+        return `
         <tr>
-            <td>${r.stock.currency === "USD" ? r.stock.ticker : r.stock.name} ${r.stock.currency === "USD" ? "🇺🇸" : "🇰🇷"}</td>
+            <td><a href="${simLink}" target="_blank" rel="noopener" style="color:#74b9ff">${simLabel}</a> ${simFlag}</td>
             <td>${Math.round(r.investKRW).toLocaleString()}원</td>
             <td>${r.shares.toLocaleString()}주</td>
             <td>${r.stock.currency === "USD" ? "$" + r.divPerShare.toFixed(2) : r.divPerShare.toLocaleString() + "원"}</td>
@@ -505,7 +521,7 @@ function runSimulation() {
             <td>${Math.round(r.annualDivPost).toLocaleString()}원</td>
             <td>${r.divMonthsLabel}</td>
         </tr>
-    `).join("");
+    `}).join("");
 
     const calendarEl = document.getElementById("sim-calendar");
     calendarEl.innerHTML = monthNames.map((name, i) => {

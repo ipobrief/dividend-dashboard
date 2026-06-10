@@ -242,7 +242,8 @@ function updateStats(usData, krData) {
     const avg = (arr, key) => (arr.reduce((s, v) => s + v[key], 0) / arr.length).toFixed(1);
     document.getElementById("stat-count").textContent = data.length;
     document.getElementById("stat-avg-yield").textContent = avg(data, "yield") + "%";
-    document.getElementById("stat-avg-growth").textContent = avg(data, "streak") + "년";
+    const withStreak = data.filter(v => (v.streak || 0) > 0);
+    document.getElementById("stat-avg-growth").textContent = (withStreak.length ? avg(withStreak, "streak") : "0") + "년";
     document.getElementById("stat-avg-fcf").textContent = avg(data, "fcfMargin") + "%";
 }
 
